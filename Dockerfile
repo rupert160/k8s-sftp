@@ -1,16 +1,13 @@
-FROM debian:jessie
-MAINTAINER Adrian Dvergsdal [atmoz.net]
+FROM alpine:latest
 
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get -y install openssh-server && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --update \
+	bash \
+    && rm -rf /var/cache/apk/*
 
 # sshd needs this directory to run
 RUN mkdir -p /var/run/sshd
 
-COPY sshd_config /etc/ssh/sshd_config
-COPY entrypoint /
-COPY README.md /
+COPY src/ .
 
 VOLUME /etc/ssh
 

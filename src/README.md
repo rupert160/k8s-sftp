@@ -1,4 +1,4 @@
-alpine-sftp
+atmoz/sftp
 ==========
 
 Easy to use SFTP ([SSH File Transfer Protocol](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol)) server with [OpenSSH](https://en.wikipedia.org/wiki/OpenSSH). This is an automated build linked with the [debian](https://hub.docker.com/_/debian/) repository.
@@ -23,7 +23,7 @@ Examples
 ```
 docker run \
     -v /host/share:/home/foo/share \
-    -p 2222:22 -d rlesouef/alpine-sftp \
+    -p 2222:22 -d atmoz/sftp \
     foo:123:1001
 ```
 
@@ -31,7 +31,7 @@ docker run \
 
 ```
 sftp:
-    image: rlesouef/alpine-sftp
+    image: atmoz/sftp
     volumes:
         - /host/share:/home/foo/share
     ports:
@@ -53,7 +53,7 @@ docker run \
     -v /host/share:/home/foo/share \
     -v /host/documents:/home/foo/documents \
     -v /host/http:/home/bar/http \
-    -p 2222:22 -d rlesouef/alpine-sftp
+    -p 2222:22 -d atmoz/sftp
 ```
 
 /host/users.conf:
@@ -70,7 +70,7 @@ Add `:e` behind password to mark it as encrypted. Use single quotes if using ter
 ```
 docker run \
     -v /host/share:/home/foo/share \
-    -p 2222:22 -d rlesouef/alpine-sftp \
+    -p 2222:22 -d atmoz/sftp \
     'foo:$1$0G2g0GSt$ewU0t6GXG15.0hWoOX8X9.:e:1001'
 ```
 
@@ -87,7 +87,7 @@ docker run \
     -v /host/id_rsa.pub:/home/foo/.ssh/keys/id_rsa.pub:ro \
     -v /host/id_other.pub:/home/foo/.ssh/keys/id_other.pub:ro \
     -v /host/share:/home/foo/share \
-    -p 2222:22 -d rlesouef/alpine-sftp \
+    -p 2222:22 -d atmoz/sftp \
     foo::1001
 ```
 
