@@ -8,6 +8,7 @@ RUN apk add --update \
 RUN mkdir -p /var/run/sshd
 
 COPY src/ .
+RUN chmod +x /entrypoint
 
 VOLUME /etc/ssh
 
