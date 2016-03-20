@@ -15,6 +15,7 @@ RUN apk update \
 RUN mkdir /etc/dropbear
 RUN touch /var/log/lastlog
 COPY docker-entrypoint.sh /
+RUN chmod +x /docker-entrypoint.sh
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
 CMD ["dropbear", "-RFEmwg", "-p", "22"]
