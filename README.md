@@ -1,122 +1,46 @@
-alpine-sftp
-==========
+# Alpine SSHD (Dropbear)
 
-Easy to use SFTP ([SSH File Transfer Protocol](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol)) server with [OpenSSH](https://en.wikipedia.org/wiki/OpenSSH). This is an automated build linked with the [debian](https://hub.docker.com/_/debian/) repository.
+[![Docker Repository on Quay](https://quay.io/repository/sjourdan/alpine-sshd/status "Docker Repository on Quay")](https://quay.io/repository/sjourdan/alpine-sshd)
+[![](https://badge.imagelayers.io/sjourdan/alpine-sshd:latest.svg)](https://imagelayers.io/?images=sjourdan/alpine-sshd:latest 'Get your own badge on imagelayers.io')
 
-Usage
------
+This is a small Alpine-based container using [openssh-sftp-server](https://pkgs.alpinelinux.org/package/main/x86/openssh-sftp-server) and [Dropbear SSH](https://matt.ucc.asn.au/dropbear/dropbear.html).
 
-- Define users as command arguments, STDIN or mounted in /etc/sftp-users.conf
-  (syntax: `user:pass[:e][:uid[:gid]]...`).
-  - You must set custom UID for your users if you want them to make changes to
-    your mounted volumes with permissions matching your host filesystem.
-- Mount volumes in user's home folder.
-  - The users are chrooted to their home directory, so you must mount the
-    volumes in separate directories inside the user's home directory
-    (/home/user/**mounted-directory**).
+The intended usage is to (temporary) access/modify shared volumes by SSH/SFTP.
 
-Examples
---------
+## Usage
 
-### Simple docker run example
+It takes 2 variables: `USER` and `PASSWORD`, both in cleartext. Redirect the TCP/22 port to whatever port you want.
 
-```
-docker run \
-    -v /host/share:/home/foo/share \
-    -p 2222:22 -d rlesouef/alpine-sftp \
-    foo:123:1001
-```
+    docker run -d \
+    -p 2222:22 \
+    -e USER=myusername \
+    -e PASSWORD=mypassword \
+    sjourdan/alpine-sshd
 
-#### Using Docker Compose:
+Then you can use this container to SFTP and/or SSH:
 
 ```
-sftp:
-    image: rlesouef/alpine-sftp
-    volumes:
-        - /host/share:/home/foo/share
-    ports:
-        - "2222:22"
-    command: foo:123:1001
+sftp -P2222 user1@192.168.99.100
+user1@192.168.99.100's password:
+Connected to 192.168.99.100.
+sftp> pwd
+Remote working directory: /home/user1
+sftp>
 ```
 
-#### Logging in
+## Dropbear Notes
 
-The OpenSSH server runs by default on port 22, and in this example, we are
-forwarding the container's port 22 to the host's port 2222. To log in with the
-OpenSSH client, run: `sftp -P 2222 foo@<host-ip>`
-
-### Store users in config
+Options used in this container:
 
 ```
-docker run \
-    -v /host/users.conf:/etc/sftp-users.conf:ro \
-    -v /host/share:/home/foo/share \
-    -v /host/documents:/home/foo/documents \
-    -v /host/http:/home/bar/http \
-    -p 2222:22 -d rlesouef/alpine-sftp
+-R              Create hostkeys as required
+-F              Don't fork into background
+-E              Log to stderr rather than syslog
+-m              Don't display the motd on login
+-w              Disallow root logins
+-g              Disable password logins for root
 ```
 
-/host/users.conf:
+## Build
 
-```
-foo:123:1001
-bar:abc:1002
-```
-
-### Encrypted password
-
-Add `:e` behind password to mark it as encrypted. Use single quotes if using terminal.
-
-```
-docker run \
-    -v /host/share:/home/foo/share \
-    -p 2222:22 -d rlesouef/alpine-sftp \
-    'foo:$1$0G2g0GSt$ewU0t6GXG15.0hWoOX8X9.:e:1001'
-```
-
-Tip: you can use makepasswd to generate encrypted passwords:  
-`echo -n "password" | makepasswd --crypt-md5 --clearfrom -`
-
-### Using SSH key (without password)
-
-Mount all public keys in the user's `.ssh/keys/` folder. All keys are automatically
-appended to `.ssh/authorized_keys`.
-
-```
-docker run \
-    -v /host/id_rsa.pub:/home/foo/.ssh/keys/id_rsa.pub:ro \
-    -v /host/id_other.pub:/home/foo/.ssh/keys/id_other.pub:ro \
-    -v /host/share:/home/foo/share \
-    -p 2222:22 -d rlesouef/alpine-sftp \
-    foo::1001
-```
-
-### Execute custom scripts or applications
-
-Put your programs in /etc/sftp.d/ and it will automatically run when the container starts.
-See next section for an example.
-
-### Bindmount dirs from another location
-
-If you are using --volumes-from or just want to make a custom directory
-available in user's home directory, you can add a script to /etc/sftp.d/ that
-bindmounts after container starts.
-
-```
-#!/bin/bash
-# Just an example (make your own):
-function bindmount() {
-    if [ -d "$1" ]; then
-        mkdir -p "$2"
-    fi
-    mount --bind $3 "$1" "$2"
-}
-
-# Remember permissions, you may have to fix it:
-# chown -R :users /data/common
-
-bindmount /data/admin-tools /home/admin/tools
-bindmount /data/common /home/dave/common
-bindmount /data/common /home/peter/common
-bindmount /data/docs /home/peter/docs --read-only
-```
+    $ make build
