@@ -1,5 +1,7 @@
 FROM alpine:latest
 
+MAINTAINER Open Source Services [opensourceservices.fr]
+
 ENV REFRESHED_AT 2016-02-27
 RUN apk add --update \
 	openssh \
