@@ -14,10 +14,16 @@ RUN apk update \
     dropbear \
     && rm -rf /var/cache/apk/*
 
-RUN mkdir /etc/dropbear
-RUN touch /var/log/lastlog
 COPY docker-entrypoint.sh /
-RUN chmod +x /docker-entrypoint.sh
+
+VOLUME ["/data"]
+
+RUN mkdir /etc/dropbear \
+    && touch /var/log/lastlog \
+    && chmod +x /docker-entrypoint.sh
+
+LABEL "original"="https://github.com/rlesouef/alpine-sftp"
+
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
-CMD ["dropbear", "-RFEmwg", "-p", "22"]
+CMD ["dropbear", "-RFEwg", "-p", "22"]
