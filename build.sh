@@ -19,7 +19,6 @@ function build_aks(){
    echo "checking resource group status"
    [[ -n $RG_STATUS && $RG_STATUS == "Succeeded" ]] && echo "resource group availble" || {
       echo "creating:resource"
-      az group create --location ${LOCATION_VALUE} --resource-group ${RG_NAME}
       RG_STATUS=`az group create --location ${LOCATION_VALUE} --resource-group ${RG_NAME} --output json | \
               jq '.properties.provisioningState' --compact-output --monochrome-output | \
               sed 's/\"//g'` 
@@ -53,12 +52,17 @@ function build_aks(){
       KUBECTL_PATH=`which kubectl`
       echo ${KUBECTL_PATH:?"No valid path for KubeCTL"}
    }
-   
+}
+
+function setup_access(){   
    echo "obtaining cluster credentials"
-   CLUSTER=`yq -r ".clusters[0] | select(.name==\"${AKS_NAME}\") | .name"  ~/.kube/config`
-   
+   #CLUSTER=`yq -r ".clusters[0] | select(.name==\"${AKS_NAME}\") | .name"  ~/.kube/config`
+   CLUSTER_REGISTERED=`az aks list --output json | jq ".[] | select([.name==\"$AKS_NAME\"]) | .fqdn" --raw-output | sed 's/\..*//'`
+   CLUSTER_CREDENTIALS=`yq --raw-output ".clusters[] | select(.name==\"$AKS_NAME\") | .cluster.server" ~/.kube/config | sed 's/https:\/\/\([^.]*\)\..*:443/\1/'`
    echo "checking cluser credentials"
-   [[ -n $CLUSTER && $CLUSTER =~ $AKS_NAME ]] && echo "Cluster registered" || {
+   [[ -n $CLUSTER_REGISTERED && -n $CLUSTER_CREDENTIALS && $CLUSTER_REGISTERED =~ $CLUSTER_CREDENTIALS ]] && echo "Cluster registered" || {
+   mv --backup=numbered ~/.kube/config ~/.kube/config.bkp
+   #[[ 1 == 0 ]] && echo "Cluster registered" || {
       echo "no cluster credentials visible, better install credentials"
       az aks get-credentials --resource-group ${RG_NAME} --name ${AKS_NAME}
       #TODO add check
@@ -96,6 +100,7 @@ function run_sftp_container(){
 #az login
 #destroy_all
 #build_aks
-#browse
+#setup_access
+browse
 #build_sftp_container
 #run_sftp_container
